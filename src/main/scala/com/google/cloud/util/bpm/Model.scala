@@ -29,12 +29,13 @@ object Model {
   case class BucketPolicy(name: String) {
     private val policy: mutable.Map[Role, mutable.Set[Identity]] = mutable.Map.empty
 
+    def size(): Int = policy.foldLeft(0)(_ + _._2.size)
+
     def result(): Policy = {
       val p = Policy.newBuilder()
       import scala.collection.JavaConverters.{mapAsJavaMapConverter, setAsJavaSetConverter}
       val bindings: Bindings = policy.mapValues(_.asJava).asJava
       p.setBindings(bindings)
-      p.setEtag(Util.hashBindings(bindings))
       p.build()
     }
 

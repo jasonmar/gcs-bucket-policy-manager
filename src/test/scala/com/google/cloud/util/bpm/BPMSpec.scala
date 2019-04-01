@@ -34,10 +34,10 @@ class BPMSpec extends FlatSpec {
       override def roles = Config.readRoleDefs(lines("roles.conf")).toMap
     }
 
-    Util.clearCache(config.cacheFile.getAbsolutePath)
+    Util.clearCache(config.cacheFile)
     val mockStorage = new NoOpStorage
 
-    val storage = EnhancedStorage(mockStorage, Util.readCache(config.cacheFile.getAbsolutePath))
+    val storage = EnhancedStorage(mockStorage, Util.readCache(config.cacheFile))
 
     BPM.applyPolicies(config, storage, 0)
     val setCount = mockStorage.setCount
@@ -50,7 +50,7 @@ class BPMSpec extends FlatSpec {
     assert(missCount > 0)
 
     // Save the cache
-    Util.writeCache(config.cacheFile.getAbsolutePath, storage.cache)
+    Util.writeCache(config.cacheFile, storage.cache)
 
     // Run again, everything should be cached
     BPM.applyPolicies(config, storage, 0)

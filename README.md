@@ -5,16 +5,22 @@ This utility reads config files and applies bucket IAM policies for groups of se
 
 ## Example Configuration
 
+Caution - it's possible to apply a policy that prevents further updates. Be careful to include at least one role with `storage.getIamPolicy` and `storage.setIamPolicy` in order retain the ability to update the IAM policy.
+
+
 ### groups.conf
 
 Define groups of identities
 
 ```
-[writeGroup]
+[writers]
 serviceaccount1@myproject.iam.gserviceaccount.com
 
-[readGroup]
+[readers]
 serviceaccount2@myotherproject.iam.gserviceaccount.com
+
+[admins]
+admin@example.com
 ```
 
 ### roles.conf
@@ -22,8 +28,9 @@ serviceaccount2@myotherproject.iam.gserviceaccount.com
 Define alias for custom roles
 
 ```
-readWrite myproject readWrite
-readOnly myproject readOnly
+rw myproject gcs_rw
+ro myproject gcs_ro
+adm myproject gcs_adm
 ```
 
 ### buckets.conf
@@ -42,8 +49,47 @@ Grant roles to groups
 
 ```
 [mybuckets]
-readWrite writeGroup
-readOnly readGroup
+rw writers
+ro readers
+adm admins
+```
+
+
+## Example IAM Roles
+
+These roles would be defined in [IAM Roles Console](https://console.cloud.google.com/iam-admin/roles) by selecting "+ Create Role"
+
+`gcs_rw` grants permissions to read and write objects.
+
+```
+storage.buckets.get
+storage.buckets.list
+storage.objects.create
+storage.objects.delete
+storage.objects.get
+storage.objects.list
+storage.objects.update
+```
+
+`gcs_ro` grants permissions to read objects
+
+```
+storage.buckets.get
+storage.buckets.list
+storage.objects.get
+storage.objects.list
+```
+
+`gcs_adm` grants permissions to modify bucket IAM policy
+
+```
+storage.buckets.create
+storage.buckets.delete
+storage.buckets.get
+storage.buckets.getIamPolicy
+storage.buckets.list
+storage.buckets.setIamPolicy
+storage.buckets.update
 ```
 
 
@@ -93,6 +139,38 @@ If the hash of a generated policy matches the hash stored in the policy cache, n
 
 ```sh
 java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar
+```
+
+### With Service Account Keyfile
+
+```sh
+java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar -k /path/to/keyfile.json
+```
+
+### Help Text
+
+```sh
+java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar --help
+```
+
+Output:
+
+```
+bpm 0.1
+Usage: bpm [options]
+
+  -b, --buckets <file>   buckets is an optional file property
+  -g, --groups <file>    groups is an optional file property
+  -p, --policies <file>  policies is an optional file property
+  -r, --roles <file>     roles is an optional file property
+  -c, --cache <file>     cache is an optional file property
+  -k, --keyFile <file>   keyFile is an optional file property
+  -t, --ttl <value>      cache ttl in milliseconds
+  -w, --wait <value>     wait time between requests in milliseconds
+  -m, --merge <value>    merge with existing policy
+  -e, --remove <value>   remove roles from existing policy during merge
+  --help                 prints this usage text
+running without arguments will load configuration from default location and overwrite any existing bucket IAM policies with the generated policies
 ```
 
 

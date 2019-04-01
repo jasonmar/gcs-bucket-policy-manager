@@ -28,6 +28,7 @@ case class Config(ttl: Long = Util.DefaultTTL,
                   policiesFile: File = new File("policies.conf"),
                   rolesFile: File = new File("roles.conf"),
                   cacheFile: File = new File("policyCache.pb"),
+                  keyFile: Option[File] = None,
                   merge: Boolean = false,
                   remove: Boolean = false) {
   import com.google.cloud.util.bpm.Config._

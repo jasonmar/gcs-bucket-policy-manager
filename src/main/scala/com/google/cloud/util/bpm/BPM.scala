@@ -24,10 +24,12 @@ object BPM {
                             config.rolesFile)
 
         val storage = EnhancedStorage(
-          storage = Util.defaultClient(),
-          cache = Util.readCache(config.cacheFile.getAbsolutePath))
+          storage = Util.defaultClient(config.keyFile),
+          cache = Util.readCache(config.cacheFile))
 
         applyPolicies(config, storage)
+
+        Util.writeCache(config.cacheFile, storage.cache)
 
       case None =>
         System.err.println(s"Failed to parse args '${args.mkString(" ")}'")
@@ -67,12 +69,18 @@ object BPM {
     // Apply policies
     for (policy <- Util.sortPolicies(policies)) {
       try {
+        val policySize = policy.size()
+        if (policySize > 1500){
+          val msg = s"Policy size $policySize exceeds limit of 1500"
+          throw new RuntimeException(msg)
+        }
         val updated = storage.update(policy, ttl, config.merge, config.remove)
         if (updated.isDefined && pause > 0)
           Thread.sleep(pause)
       } catch {
         case e: Exception =>
           System.err.println(s"Failed to update policy on gs://${policy.name}: ${e.getMessage}")
+          e.printStackTrace(System.err)
           if (pause > 0) Thread.sleep(pause)
       }
     }

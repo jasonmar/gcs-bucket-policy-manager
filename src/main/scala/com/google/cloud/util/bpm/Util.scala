@@ -11,9 +11,11 @@ limitations under the License.
 ==============================================================================*/
 package com.google.cloud.util.bpm
 
+import java.io.FileInputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths, StandardOpenOption}
 
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.{Storage, StorageOptions}
 import com.google.cloud.util.bpm.Model.{Bindings, BucketPolicy, PolicyMembership}
 import com.google.cloud.util.bpm.PolicyCache.Hash
@@ -125,21 +127,19 @@ object Util {
     c.build()
   }
 
-  def clearCache(path: String): Unit = {
+  def clearCache(file: java.io.File): Unit = {
     import StandardOpenOption.{CREATE, SYNC, TRUNCATE_EXISTING, WRITE}
-    Files.write(Paths.get(path), PolicyCache.getDefaultInstance.toByteArray, CREATE, WRITE, TRUNCATE_EXISTING, SYNC)
+    Files.write(Paths.get(file.getAbsolutePath), PolicyCache.getDefaultInstance.toByteArray, CREATE, WRITE, TRUNCATE_EXISTING, SYNC)
   }
 
-  def writeCache(path: String, cache: EnhancedPolicyCache): Unit = {
+  def writeCache(file: java.io.File, cache: EnhancedPolicyCache): Unit = {
     import StandardOpenOption.{CREATE, SYNC, TRUNCATE_EXISTING, WRITE}
-    Files.write(Paths.get(path), cache.toByteArray, CREATE, WRITE, TRUNCATE_EXISTING, SYNC)
+    Files.write(Paths.get(file.getAbsolutePath), cache.toByteArray, CREATE, WRITE, TRUNCATE_EXISTING, SYNC)
   }
 
-  def readCache(path: String): EnhancedPolicyCache = {
-    val p = Paths.get("policyCache.pb")
-    val f = p.toFile
-    if (f.exists() && f.isFile) {
-      val cache = PolicyCache.parseFrom(Files.readAllBytes(p))
+  def readCache(file: java.io.File): EnhancedPolicyCache = {
+    if (file.exists() && file.isFile) {
+      val cache = PolicyCache.parseFrom(Files.readAllBytes(Paths.get(file.getAbsolutePath)))
       new EnhancedPolicyCache(cache.toBuilder)
     } else new EnhancedPolicyCache(PolicyCache.newBuilder())
   }
@@ -167,8 +167,16 @@ object Util {
     }
   }
 
-  def defaultClient(): Storage = {
-    StorageOptions.getDefaultInstance.getService
+  def defaultClient(keyfile: Option[java.io.File] = None): Storage = {
+    val b = StorageOptions.getDefaultInstance
+      .toBuilder
+    keyfile match {
+      case Some(file) =>
+        val credentials = GoogleCredentials.fromStream(new FileInputStream(file))
+        b.setCredentials(credentials)
+      case _ =>
+    }
+    b.build().getService
   }
 
   case class EnhancedStorage(storage: Storage, cache: EnhancedPolicyCache) {
@@ -183,7 +191,7 @@ object Util {
       if (cache.update(p.name, newPolicy, ttl)) {
         cacheMiss += 1
         val existing = storage.getIamPolicy(p.name)
-        if (hash(existing) != newPolicy.getEtag) {
+        if (hash(existing) != hash(newPolicy)) {
           if (merge) {
             val merged = Util.mergePolicies(existing, newPolicy, remove)
             Option(storage.setIamPolicy(p.name, merged))

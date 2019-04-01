@@ -41,6 +41,11 @@ object OptionParser extends scopt.OptionParser[Config]("bpm") {
     .action( (x, c) => c.copy(cacheFile = x) )
     .text("cache is an optional file property")
 
+  opt[File]('k', "keyFile")
+    .valueName("<file>")
+    .action( (x, c) => c.copy(keyFile = Option(x)) )
+    .text("keyFile is an optional file property")
+
   opt[Long]('t', "ttl")
     .action((x, c) => c.copy(ttl = x))
     .text("cache ttl in milliseconds")
