@@ -26,8 +26,6 @@ class BPMSpec extends FlatSpec {
   }
 
   "BPM" should "update bucket IAM policies" in {
-    val parser = ValidatingIdentityParser()
-
     val config = new Config {
       override def bucketGroups = Config.readBucketGroups(lines("buckets.conf")).toMap
       override def groups = Config.readGroups(lines("groups.conf"), parser).toMap

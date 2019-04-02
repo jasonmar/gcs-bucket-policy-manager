@@ -105,6 +105,15 @@ storage.buckets.update
 5. Writes updated policy cache
 
 
+### Admin Identity
+
+The admin identity is the identity used to run the utility and set IAM policy. If you are using a json keyfile, it should be the identity found in the keyfile.
+
+You are required to provide admin identity as a safety precaution to avoid setting an IAM policy that prevents future updates.
+
+Whatever policy is resolved from configuration, this utility will add an additional role grant of `storage.admin` to the admin identity.
+
+
 ### Config Validation
 
 It's possible to pass a list of allowed domains or projects and have the config parser enforce that all service accounts are associated with whitelisted projects and all users are associated with allowed domains.
@@ -140,14 +149,18 @@ If the hash of a generated policy matches the hash stored in the policy cache, n
 
 ## Usage
 
+Example for running as user `admin@example.com`:
+
 ```sh
-java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar
+java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar --adminIdentity groupadmin@myproject.iam.gserviceaccount.com
 ```
 
 ### With Service Account Keyfile
 
+Example for running as service account with ID `groupadmin@myproject.iam.gserviceaccount.com`:
+
 ```sh
-java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar -k /path/to/keyfile.json
+java -Xmx1g -Xms1g -jar target/scala-2.11/bpm.jar --adminIdentity groupadmin@myproject.iam.gserviceaccount.com -k /path/to/keyfile.json
 ```
 
 ### Help Text
