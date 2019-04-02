@@ -28,14 +28,17 @@ case class Config(ttl: Long = Util.DefaultTTL,
                   policiesFile: File = new File("policies.conf"),
                   rolesFile: File = new File("roles.conf"),
                   cacheFile: File = new File("policyCache.pb"),
+                  adminIdentity: String = "",
                   keyFile: Option[File] = None,
                   merge: Boolean = false,
                   remove: Boolean = false) {
   import com.google.cloud.util.bpm.Config._
+  val parser = ValidatingIdentityParser()
   def bucketGroups: Map[String,Set[String]] = readBucketGroups(bucketsFile)
-  def groups: Map[String,Set[Identity]] = readGroups(groupsFile, ValidatingIdentityParser())
+  def groups: Map[String,Set[Identity]] = readGroups(groupsFile, parser)
   def policies: Map[String,Seq[RoleGrant]] = readPolicies(policiesFile)
   def roles: Map[String,Role] = readRoleDefs(rolesFile)
+  def admin: Set[Identity] = parser.parseIdentity(adminIdentity).toSet
 }
 
 object Config {
@@ -306,7 +309,6 @@ object Config {
     val configLines = lines.flatMap(readRoleDefLine)
     configLines.flatMap(parseGCSRole).toArray.toSeq
   }
-
 
   def requireFiles(files: java.io.File*): Unit = {
     var missing = false

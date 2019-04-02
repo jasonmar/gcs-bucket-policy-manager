@@ -11,6 +11,7 @@ limitations under the License.
 ==============================================================================*/
 package com.google.cloud.util.bpm
 
+import com.google.cloud.storage.StorageRoles
 import com.google.cloud.util.bpm.Util.EnhancedStorage
 import com.google.cloud.{Identity, Role}
 
@@ -22,6 +23,11 @@ object BPM {
                             config.groupsFile,
                             config.policiesFile,
                             config.rolesFile)
+
+        if (config.admin.isEmpty) {
+          System.err.println("valid admin identity is required")
+          System.exit(1)
+        }
 
         val storage = EnhancedStorage(
           storage = Util.defaultClient(config.keyFile),
@@ -68,6 +74,7 @@ object BPM {
 
     // Apply policies
     for (policy <- Util.sortPolicies(policies)) {
+      policy.grantRole(StorageRoles.admin(), config.admin)
       try {
         val policySize = policy.size()
         if (policySize > 1500){

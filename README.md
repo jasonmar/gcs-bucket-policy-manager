@@ -3,9 +3,12 @@
 This utility reads config files and applies bucket IAM policies for groups of service accounts and GCS buckets.
 
 
-## Example Configuration
+## Warning
 
-Caution - it's possible to apply a policy that prevents further updates. Be careful to include at least one role with `storage.getIamPolicy` and `storage.setIamPolicy` in order retain the ability to update the IAM policy.
+It's possible to apply a policy that prevents further updates. Be careful to set `--adminIdentity` and include at least one role with `storage.getIamPolicy` and `storage.setIamPolicy` in order retain the ability to update the IAM policy.
+
+
+## Example Configuration
 
 
 ### groups.conf
@@ -159,17 +162,19 @@ Output:
 bpm 0.1
 Usage: bpm [options]
 
-  -b, --buckets <file>   buckets is an optional file property
-  -g, --groups <file>    groups is an optional file property
-  -p, --policies <file>  policies is an optional file property
-  -r, --roles <file>     roles is an optional file property
-  -c, --cache <file>     cache is an optional file property
-  -k, --keyFile <file>   keyFile is an optional file property
-  -t, --ttl <value>      cache ttl in milliseconds
-  -w, --wait <value>     wait time between requests in milliseconds
-  -m, --merge <value>    merge with existing policy
-  -e, --remove <value>   remove roles from existing policy during merge
-  --help                 prints this usage text
+  -a, --adminIdentity <value>
+                           REQUIRED email of admin user or service account
+  -k, --keyFile <file>     (optional) path to GoogleCredentials json key file
+  -b, --buckets <file>     (optional) path to buckets.conf
+  -g, --groups <file>      (optional) path to groups.conf
+  -p, --policies <file>    (optional) path to policies.conf
+  -r, --roles <file>       (optional) path to roles.conf
+  -c, --cache <file>       (optional) path to policyCache.pb
+  -t, --ttl <value>        (optional) cache ttl in milliseconds; default 1 week
+  -w, --wait <value>       (optional) wait time between requests in milliseconds; default 100ms
+  -m, --merge <value>      (optional) merge with existing policy; default false
+  -e, --remove <value>     (optional) remove roles from existing policy during merge; default true
+  --help                   prints this usage text
 running without arguments will load configuration from default location and overwrite any existing bucket IAM policies with the generated policies
 ```
 

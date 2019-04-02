@@ -13,6 +13,7 @@ package com.google.cloud.util.bpm
 
 import java.nio.charset.StandardCharsets
 
+import com.google.cloud.Identity
 import com.google.cloud.util.bpm.Config.ValidatingIdentityParser
 import com.google.cloud.util.bpm.Util.EnhancedStorage
 import com.google.common.io.Resources
@@ -32,6 +33,7 @@ class BPMSpec extends FlatSpec {
       override def groups = Config.readGroups(lines("groups.conf"), parser).toMap
       override def policies = Config.readPolicies(lines("policies.conf")).toMap
       override def roles = Config.readRoleDefs(lines("roles.conf")).toMap
+      override def admin: Set[Identity] = Set(Identity.user("admin@example.com"))
     }
 
     Util.clearCache(config.cacheFile)
